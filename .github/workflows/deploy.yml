@@ -1,0 +1,26 @@
+name: Deploy BRRGRR
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: [ "self-hosted", "lab" ]   # must match your runner labels
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          IMAGE_TAG="brrgrr:${GITHUB_SHA::7}"
+          docker build -t $IMAGE_TAG .
+
+      - name: Stop old container
+        run: |
+          docker rm -f brrgrr || true
+
+      - name: Run new container
+        run: |
+          docker run -d --name brrgrr -p 8080:80 --restart=always $IMAGE_TAG
